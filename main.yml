@@ -1,0 +1,36 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: tailscale repo added
+      get_url: 
+        url: https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+        dest: /etc/yum.repos.d/tailscale.repo
+    - name: packages installed
+      dnf:
+        state: present
+        name:
+        - git
+        - nnn
+        - tmux
+        - vim
+        - w3m
+        - htop
+        - tailscale
+    - name: tailscale service enabled
+      service:
+        name: tailscaled
+        state: started
+        enabled: yes
+    - name: enable IP forwarding
+      copy:
+        dest: /etc/sysctl.d/99-tailscale.conf
+        content: |
+          net.ipv4.ip_forward = 1
+          net.ipv6.conf.all.forwarding = 1
+    - name: apply sysctl change
+      command:
+        cmd: sysctl -p /etc/sysctl.d/99-tailscale.conf
+    # - name: tailscale started
+    #   command:
+    #     cmd: tailscale up --ssh --advertise-exit-node
